@@ -151,19 +151,28 @@ class Unknow_maze(Maze):
 
 class Know_maze(Maze):
     def __init__(self, mapp):
-        self.map = mapp
+        self.mapp = mapp
         self.decode_dict = {'u': (-1, 0), 'l': (0, -1), 'd': (1, 0), 'r': (0, 1), 'n': (0, 0)}
-        self.decode_direct = ['uldr', 'ruld', 'drul', 'ldru']
+        self.decode_direct = ['uldr', 'ldru', 'drul', 'ruld']
         self.size = len(self.mapp)
 
     def convert_direct(self, old, direct):
         ret = ""
         for d in old:
-            if d == "u": d += self.decode_direct[direct][0]
-            if d == "l": d += self.decode_direct[direct][1]
-            if d == "d": d += self.decode_direct[direct][2]
-            if d == "r": d += self.decode_direct[direct][3]
-        return ret
+            if d == "u": ret += self.decode_direct[direct][0]
+            if d == "l": ret += self.decode_direct[direct][1]
+            if d == "d": ret += self.decode_direct[direct][2]
+            if d == "r": ret += self.decode_direct[direct][3]
+        new_ret = ""
+        if "u" in ret:
+            new_ret += "u"
+        if "l" in ret:
+            new_ret += "l"
+        if "d" in ret:
+            new_ret += "d"
+        if "r" in ret:
+            new_ret += "r"
+        return new_ret
 
     def localise(self, situation, last_neib=[]):
         if last_neib:
@@ -172,23 +181,20 @@ class Know_maze(Maze):
             may_be_sectors = []
             for i in range(len(self.mapp)):
                 for j in range(len(self.mapp)):
-                    if situation in [self.convert_direct(self.mapp[i][j], k) for k in range(4)]:
-                        i1, j1 = i, j
-                        for s in range(len(last_neib)):
-                            fl = False
-                            now_neib = self.neib((i1, j1), self.size)
-                            for neib in now_neib:
-                                if last_neib[s] in [self.convert_direct(self.mapp[neib[[0]]][neib[1]], k) for k in range(4)]:
-                                    fl = True
-                                    i1, j1 = neib[0], neib[1]
-                                    break
-                            if fl:
-                                may_be_sectors.append((i, j))
-                                break
+                    if situation in [self.convert_direct(self.mapp[i][j], k) for k in range(4)] and (i, j) in last_neib:
+                        may_be_sectors.append((i, j))
         else:
             may_be_sectors = []
             for i in range(len(self.mapp)):
                 for j in range(len(self.mapp)):
-                    if situation in [self.convert_direct(self.mapp[i][j], k) for k in range(4)]:
-                        may_be_sectors.append((i, j))
+                    all_sec_dir = [self.convert_direct(self.mapp[i][j], k) for k in range(4)]
+                    if situation in all_sec_dir:
+                        may_be_sectors.append((i, j, all_sec_dir.index(situation)))
         return may_be_sectors
+
+
+mapp = [
+    ["dr", "lr", "l"],
+    ["ud", "n", "n"],
+    ["u", "n", "n"]
+       ]
