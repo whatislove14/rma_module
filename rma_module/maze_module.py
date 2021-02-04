@@ -1,19 +1,22 @@
-class Non_localize_error(EOFError):
+class NonLocalizeError(EOFError):
     pass
 
 
 class Maze:
-    def neib(self, now, size):
-        y, x = now
+    def back_neib(self, now, size):
+        y, x, d = now
         now_neib = []
-        if y-1 >= 0:
-            now_neib.append((y-1, x))
-        elif x+1 < size:
-            now_neib.append((y, x+1))
-        elif y+1 < size:
-            now_neib.append((y+1, x))
-        elif x-1 >= 0:
-            now_neib.append((y, x-1))
+        now_neib.append((y, x, (d+3) % 4))
+        now_neib.append((y, x, (d+1) % 4))
+        now_neib.append((y, x, d))
+        if y - 1 >= 0 and d == 2:
+            now_neib.append((y - 1, x, d))
+        if x + 1 < size and d == 3:
+            now_neib.append((y, x + 1, d))
+        if y + 1 < size and d == 0:
+            now_neib.append((y + 1, x, d))
+        if x - 1 >= 0 and d == 1:
+            now_neib.append((y, x - 1, d))
         return now_neib
 
     def change_position(self, now_position):
@@ -23,19 +26,19 @@ class Maze:
 class Unknow_maze(Maze):
     def __init__(self, size, now_direct=0, preg=list()):
         self.size = size
-        self.local_size = size*2 + 1
+        self.local_size = size * 2 + 1
         self.preg = preg
         self.now_direct = now_direct
-        self.min_x = self.local_size//2-1
-        self.max_x = self.local_size//2-1
-        self.min_y = self.local_size//2-1
-        self.max_y = self.local_size//2-1
+        self.min_x = self.local_size // 2 - 1
+        self.max_x = self.local_size // 2 - 1
+        self.min_y = self.local_size // 2 - 1
+        self.max_y = self.local_size // 2 - 1
         self.now_x = self.min_x
         self.now_y = self.min_y
         self.is_localised = False
 
     def search_way(self, start, finish, ret="way", size=False):
-        if not size: size=self.size
+        if not size: size = self.size
         all_maze = {}
         y_start, x_start, d_start = start
         y_finish, x_finish = finish
@@ -52,16 +55,16 @@ class Unknow_maze(Maze):
         for maze in q:
             now_neib = []
             y, x, d = maze
-            now_neib.append((y, x, (d+1) % 4))
-            now_neib.append((y, x, (d+3) % 4))
-            if d == 0 and y-1 >= 0:
-                now_neib.append((y-1, x, d))
-            elif d == 1 and x+1 < n:
-                now_neib.append((y, x+1, d))
-            elif d == 2 and y+1 < n:
-                now_neib.append((y+1, x, d))
-            elif d == 3 and x-1 >= 0:
-                now_neib.append((y, x-1, d))
+            now_neib.append((y, x, (d + 1) % 4))
+            now_neib.append((y, x, (d + 3) % 4))
+            if d == 0 and y - 1 >= 0:
+                now_neib.append((y - 1, x, d))
+            elif d == 1 and x + 1 < n:
+                now_neib.append((y, x + 1, d))
+            elif d == 2 and y + 1 < n:
+                now_neib.append((y + 1, x, d))
+            elif d == 3 and x - 1 >= 0:
+                now_neib.append((y, x - 1, d))
             for fr in now_neib:
                 if (fr[0], fr[1]) not in block and fr not in all_maze:
                     q.append(fr)
@@ -88,17 +91,17 @@ class Unknow_maze(Maze):
             ret_neib = []
             y0, x0, d0 = sector
             # разворот робота
-            ret_neib.append((y0, x0, (d0+1) % 4))
-            ret_neib.append((y0, x0, (d0+3) % 4))
+            ret_neib.append((y0, x0, (d0 + 1) % 4))
+            ret_neib.append((y0, x0, (d0 + 3) % 4))
             # переход в другую клетку
-            if d0 == 0 and y0+1 < n:
-                ret_neib.append((y0+1, x0, d0))
-            elif d0 == 1 and x0-1 >= 0:
-                ret_neib.append((y0, x0-1, d0))
-            elif d0 == 2 and y0-1 >= 0:
-                ret_neib.append((y0-1, x0, d0))
-            elif d0 == 3 and x0+1 < n:
-                ret_neib.append((y0, x0+1, d0))
+            if d0 == 0 and y0 + 1 < n:
+                ret_neib.append((y0 + 1, x0, d0))
+            elif d0 == 1 and x0 - 1 >= 0:
+                ret_neib.append((y0, x0 - 1, d0))
+            elif d0 == 2 and y0 - 1 >= 0:
+                ret_neib.append((y0 - 1, x0, d0))
+            elif d0 == 3 and x0 + 1 < n:
+                ret_neib.append((y0, x0 + 1, d0))
             for fr in ret_neib:
                 if fr in all_maze:
                     if all_maze[sector] - all_maze[fr] == 1:
@@ -114,7 +117,7 @@ class Unknow_maze(Maze):
             out = ""
             for k in range(len(jour) - 1):
                 y0, x0, d0 = jour[k]
-                y1, x1, d1 = jour[k+1]
+                y1, x1, d1 = jour[k + 1]
                 if d1 - d0 == 1 or d1 - d0 == -3:
                     out += "R"
                 elif d1 - d0 == -1 or d1 - d0 == 3:
@@ -126,8 +129,8 @@ class Unknow_maze(Maze):
             raise ValueError
 
     def localize(self, ret="zn"):
-        if self.max_x-self.min_x != self.size-1 or self.max_y-self.min_y != self.size-1:
-            raise Non_localize_error
+        if self.max_x - self.min_x != self.size - 1 or self.max_y - self.min_y != self.size - 1:
+            raise NonLocalizeError
         zero_x = self.min_x
         zero_y = self.min_y
         self.now_x -= zero_x
@@ -135,7 +138,7 @@ class Unknow_maze(Maze):
         new_preg = list()
         if not self.is_localised:
             for k in self.preg:
-                new_preg.append((k[0]-zero_y, k[1]-zero_x))
+                new_preg.append((k[0] - zero_y, k[1] - zero_x))
         self.preg = list()
         self.preg = new_preg
         self.is_localised = True
@@ -176,13 +179,23 @@ class Know_maze(Maze):
 
     def localise(self, situation, last_neib=[]):
         if last_neib:
-            last_neib = last_neib.copy()
-            last_neib.reverse()
             may_be_sectors = []
             for i in range(len(self.mapp)):
                 for j in range(len(self.mapp)):
-                    if situation in [self.convert_direct(self.mapp[i][j], k) for k in range(4)] and (i, j) in last_neib:
-                        may_be_sectors.append((i, j))
+                    all_sec_dir = [self.convert_direct(self.mapp[i][j], k) for k in range(4)]
+                    if situation in all_sec_dir:
+                        if situation == "uldr":
+                            for situation_dir in range(4):
+                                for ne in self.back_neib((i, j, situation_dir), self.size):
+                                    if ne in last_neib:
+                                        may_be_sectors.append((i, j, situation_dir))
+                                        break
+                        else:
+                            situation_dir = all_sec_dir.index(situation)
+                            for ne in self.back_neib((i, j, situation_dir), self.size):
+                                if ne in last_neib:
+                                    may_be_sectors.append((i, j, situation_dir))
+                                    break
         else:
             may_be_sectors = []
             for i in range(len(self.mapp)):
@@ -191,10 +204,3 @@ class Know_maze(Maze):
                     if situation in all_sec_dir:
                         may_be_sectors.append((i, j, all_sec_dir.index(situation)))
         return may_be_sectors
-
-
-mapp = [
-    ["dr", "lr", "l"],
-    ["ud", "n", "n"],
-    ["u", "n", "n"]
-       ]
