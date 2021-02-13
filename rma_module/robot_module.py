@@ -1,16 +1,28 @@
-# БИБЛИОТЕКА
-import maze_module
+from trik_var import brick, script
 
 
 class Robot:
     '''
-    Позволяет создать объект Robot, хранящий в себе скрипты, необходимые для передвижения робота
-    Имеет основные свойства ml, mr, encl, encr (левые и правые моторы/энкодеры соотв) итд
+    Позволяет создать объект Robot
+    Основные методы:
+        start - стартовая функция (калибровка+сброс)
+        turn_l, turn_r, front - функции движения
+        check_left, check_right, check_back, check_front - проверка преград
+        rovn - выравнивание по стенкам
+        just_left_hand - движение по левой руке (с возможными модификациями)
+        check_preg - полная проверка преград + операции с ними
+        go_commands - езда по заданным командам
+        unknow_localize - алгоритм движения для локализации
+
+    Основные параметры:
+        ml, mr - моторы (дефолт-M3, M4)
+        encl, encr - энкодеры (дефолт-E3, E4)
+        sens_left, sens_right, sens_back, sens_front - сенсоры
+        gyro - гироскоп (дефолт-задан)
     '''
 
     def __init__(self, ml="M3", mr="M4", encl="E3", encr="E4", sens_left='',
                  sens_right='', sens_front='', sens_back=''):
-
         self.ml = brick.motor(ml).setPower
         self.mr = brick.motor(mr).setPower
         self.encl = brick.encoder(encl)
@@ -22,6 +34,11 @@ class Robot:
         self.gyro = brick.gyroscope()
 
     def start(self, time_calib=1000):
+        '''
+        start - стартовая функция
+        производится калибровка гироскопа+сброс энкодеров
+        Параметр time_calib - время калибровки в мс (дефолт-1000)
+        '''
         self.gyro.calibrate(time_calib)
         script.wait(time_calib)
         self.encl.reset()
@@ -63,6 +80,10 @@ class Robot:
         script.wait(1000)
 
     def front(self, enc):
+        '''
+        Функция движения вперед
+        Параметр enc - кол-во энкодеров, на которое соверш. движение
+        '''
         abs_angl = (360000 + self.gyro.read()[6]) % 360000
         now_angl = abs_angl
         s = 0
@@ -125,6 +146,13 @@ class Robot:
                 script.wait(1)
 
     def just_left_hand(self, go_enc, mode="jlh"):
+        '''
+        Функция движения по левой руке с модификациями
+        jlh - стандарт
+        sal (stop after left) - прекращение движения после каждой команды\
+            если какая-то команда не доделана, то она возвращается в качестве\
+            текста
+        '''
         if self.check_left():
             self.turn_l()
             self.rovn()
@@ -140,7 +168,14 @@ class Robot:
             self.rovn()
         return []
 
-    def check_preg(self, maze, ret="maze+clear"):
+    def check_preg(self, maze=None, ret="maze+clear"):
+        '''
+        check_preg - полная проверка преград + операции с ними
+        Параметр ret - влияет на результат работы:
+            maze - изменяет заданный лабиринт
+            clear - возвращает список свободных направлений
+            maze+clear - оба действия
+        '''
         decode_direct = [[(-1, 0), (0, -1), (1, 0), (0, 1)],
                          [(0, 1), (-1, 0), (0, -1), (1, 0)],
                          [(1, 0), (0, 1), (-1, 0), (0, -1)],
@@ -211,37 +246,3 @@ class Robot:
                 maze.min_x = maze.max_x - maze.size
                 maze.min_y = maze.max_y - maze.size
                 break
-
-
-# КОД ПРОГРАММЫ
-
-mapp = [["r", "ld", "n", "n", "d", "n"],
-        ["n", "udr", "ldr", "ldr", "uldr", "l"],
-        ["r", "uldr", "uldr", "uldr", "uld", "n"],
-        ["n", "udr", "uldr", "uldr", "uldr", "ld"],
-        ["dr", "ulr", "uldr", "ulr", "uldr", "uld"],
-        ["u", "n", "u", "n", "ur", "ul"]]
-robot = Robot(ml="M3", mr="M4", encl="E3", encr="E4", sens_left="A1", sens_right="A2", sens_back="D2", sens_front="D1")
-maze = maze_module.Know_maze(mapp)
-
-robot.start()
-mb_sectors = []
-n = []
-while True:
-    n = robot.just_left_hand(990, "sal")
-    sit = robot.check_preg(maze, "clear")
-    mb_sectors = maze.localise(sit, mb_sectors)
-    print(mb_sectors)
-    if len(mb_sectors) == 1:
-      print("-----------")
-      print(mb_sectors)
-      break
-    robot.go_commands(n, 990)
-    sit = robot.check_preg(maze, "clear")
-    mb_sectors = maze.localise(sit, mb_sectors)
-    print(mb_sectors)
-    if len(mb_sectors) == 1:
-      print("-----------")
-      print(mb_sectors)
-      break
-    
